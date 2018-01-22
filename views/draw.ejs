@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/css/bootstrap.min.css" integrity="sha384-Zug+QiDoJOrZ5t4lssLdxGhVrurbmBWopoEl+M6BdEfwnCJZtKxi1KgxUyJq13dy" crossorigin="anonymous">
+
+    <!-- CSS -->
+    <link rel='stylesheet' href='/stylesheets/draw.css' />
+
+    <title><%= title %></title>
+  </head>
+  <body>
+
+    <div class="container">
+
+      <div class="row justify-content-center">
+        <div class="col-auto">
+          <h1 class="text-center h2"><%= title %></h1>
+          <!-- <hr> -->
+        </div>
+      </div>
+
+      <div class="row justify-content-center">
+        <div class="col-auto">
+          <canvas id="mainCanvas" width="400" height="400"></canvas>
+          <canvas id="myCanvas" width="400" height="400"></canvas>
+          <canvas id="otherCanvas" width="400" height="400"></canvas>
+        </div>
+      </div>
+
+      <div class="row justify-content-center">
+        <div class="col-auto align-self-center">
+          <div id="colorpickBlack" class="colorpick colorpickSelected black"></div>
+          <div id="colorpickWhite" class="colorpick white"></div>
+          <div id="colorpickRed" class="colorpick red"></div>
+          <div id="colorpickGreen" class="colorpick green"></div>
+          <div id="colorpickBlue" class="colorpick blue"></div>
+        </div>
+        <div class="col-auto align-self-center">
+          <div class="input-group">
+            <div class="input-group-prepend">
+              <div class="input-group-text">Brush Size</div>
+            </div>
+            <input type="number" id="sizepick" class="form-control" value="5" min="1" step="1">
+          </div>
+        </div>
+      </div>
+
+      <div class="row justify-content-center">
+        <div class="col-auto">
+        </div>
+      </div>
+
+    </div>
+
+    <!-- JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/js/bootstrap.min.js" integrity="sha384-a5N7Y/aK3qNeh15eJKGWxsqtnX/wWdSZSKp+81YjTmS15nvnvxKHuzaWwXHDli+4" crossorigin="anonymous"></script>
+
+    <!-- socket.io -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js" integrity="sha256-WPeFPWD3PZQUDrpFnDM1N2KadNVwCfNS4cCZ78b76T8=" crossorigin="anonymous"></script>
+
+    <!-- Interaction -->
+    <script>
+
+      var socket = io();
+      var canvas = document.getElementById('mainCanvas');
+      var canvasWidth = $('#mainCanvas').width();
+      var canvasHeight = $('#mainCanvas').height();
+      var mainctx = canvas.getContext('2d');
+
+
+      var myCanvas = document.getElementById('myCanvas');
+      var ctx = myCanvas.getContext('2d');
+
+      var otherCanvas = document.getElementById('otherCanvas');
+      var otherctx = otherCanvas.getContext('2d');
+
+      var users = {};
+
+      var myBrush = {
+        x: null,
+        y: null,
+        down: false,
+        color: {
+          r: 0,
+          g: 0,
+          b: 0,
+          a: 1
+        },
+        size: 5
+      };
+
+
+
+      function brushDown(brush) {
+        socket.emit('brushDownOut', brush.x + ',' + brush.y + ',' + brush.color.r + ',' + brush.color.g + ',' + brush.color.b + ',' + brush.color.a + ',' + brush.size);
+
+        ctx.strokeStyle = 'rgba(' + brush.color.r + ',' + brush.color.g + ',' + brush.color.b + ',' + brush.color.a + ')';
+        ctx.lineWidth = brush.size;
+        ctx.lineJoin = "round";
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+
+        brush.down = true;
+      }
+
+      function moveBrush(e, brush) {
+        // Convert the pointer coordinates (relative to the device) to canvas coordinates
+        var offset = $('#mainCanvas').offset();
+        brush.x = Math.floor((e.pageX || e.touches[0].pageX) - offset.left) + 1;
+        brush.y = Math.floor((e.pageY || e.touches[0].pageY) - offset.top) + 1;
+
+        // Clamp the brush to the canvas bounds and stop drawing if it goes outside
+        if ((brush.x < 0) || (brush.y < 0) || (brush.x > canvasWidth) || (brush.y > canvasHeight)) {
+          brush.x = Math.min(canvasWidth, Math.max(0, brush.x));
+          brush.y = Math.min(canvasHeight, Math.max(0, brush.y));
+          brushUp(brush);
+        }
+
+        if (brush.down) {
+          socket.emit('brushMoveOut', brush.x + ',' + brush.y);
+          ctx.lineTo(brush.x, brush.y);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(brush.x, brush.y);
+
+          mainctx.drawImage(myCanvas, 0, 0);
+          ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+        }
+      };
+
+      function brushUp(brush) {
+        // socket.emit('brushUpOut');
+        brush.down = false;
+      }
+
+
+
+      $('#mainCanvas').on('mousedown touchstart', function(e){
+        myBrush.size = parseInt($('#sizepick').val(), 10);
+        moveBrush(e, myBrush);
+        brushDown(myBrush);
+        moveBrush(e, myBrush);
+
+        // Prevent mobile gestures, like refreshing or zooming
+        e.preventDefault(); 
+        e.stopPropagation();
+      });
+
+      $('#mainCanvas').on('mousemove touchmove', function(e){
+        moveBrush(e, myBrush);
+      });
+
+      $('#mainCanvas').on('mouseup touchend', function(e){
+        if (myBrush.down) {
+          brushUp(myBrush);
+        }
+      });
+
+      $('#mainCanvas').on('mouseleave', function(e){
+        if (myBrush.down) {
+          brushUp(myBrush);
+        }
+      });
+
+
+
+      $('#colorpickBlack').on('click', function(e){
+        myBrush.color.r = 0;
+        myBrush.color.g = 0;
+        myBrush.color.b = 0;
+        $('.colorpick').removeClass( 'colorpickSelected' );
+        $('#colorpickBlack').addClass( 'colorpickSelected' );
+      });
+
+      $('#colorpickWhite').on('click', function(e){
+        myBrush.color.r = 255;
+        myBrush.color.g = 255;
+        myBrush.color.b = 255;
+        $('.colorpick').removeClass( 'colorpickSelected' );
+        $('#colorpickWhite').addClass( 'colorpickSelected' );
+      });
+
+      $('#colorpickRed').on('click', function(e){
+        myBrush.color.r = 255;
+        myBrush.color.g = 0;
+        myBrush.color.b = 0;
+        $('.colorpick').removeClass( 'colorpickSelected' );
+        $('#colorpickRed').addClass( 'colorpickSelected' );
+      });
+
+      $('#colorpickGreen').on('click', function(e){
+        myBrush.color.r = 0;
+        myBrush.color.g = 255;
+        myBrush.color.b = 0;
+        $('.colorpick').removeClass( 'colorpickSelected' );
+        $('#colorpickGreen').addClass( 'colorpickSelected' );
+      });
+
+      $('#colorpickBlue').on('click', function(e){
+        myBrush.color.r = 0;
+        myBrush.color.g = 0;
+        myBrush.color.b = 255;
+        $('.colorpick').removeClass( 'colorpickSelected' );;
+        $('#colorpickBlue').addClass( 'colorpickSelected' );
+      });
+
+
+
+      socket.on('userConnectIn', function(msg){
+        console.log('User connected: ' + msg);
+      });
+
+      socket.on('userDisconnectIn', function(msg){
+        console.log('User disconnected: ' + msg);
+        delete users[msg];
+      });
+
+      socket.on('brushDownIn', function(msg){
+        var values = msg.split(",");
+        var user = values[0];
+
+        // If this user hasn't been seen before, add them to the list with a default brush
+        users[user] = {
+          brush: {
+            x: null,
+            y: null,
+            down: false,
+            color: {
+              r: 0,
+              g: 0,
+              b: 0,
+              a: 1
+            },
+            size: 5
+          }
+        };
+
+        users[user].brush.x = values[1];
+        users[user].brush.y = values[2];
+        users[user].brush.down = true;
+        users[user].brush.color.r = values[3];
+        users[user].brush.color.g = values[4];
+        users[user].brush.color.b = values[5];
+        users[user].brush.color.a = values[6];
+        users[user].brush.size = values[7];
+
+      });
+
+      socket.on('brushMoveIn', function(msg){
+        var values = msg.split(",");
+        var user = values[0];
+        var newX = values[1];
+        var newY = values[2];
+
+        otherctx.strokeStyle = 'rgba(' + users[user].brush.color.r + ',' + users[user].brush.color.g + ',' + users[user].brush.color.b + ',' + users[user].brush.color.a + ')';
+        otherctx.lineWidth = users[user].brush.size;
+        otherctx.lineJoin = "round";
+        otherctx.lineCap = 'round';
+        otherctx.beginPath();
+        otherctx.moveTo(users[user].brush.x, users[user].brush.y);
+        otherctx.lineTo(newX, newY);
+        otherctx.stroke();
+
+        users[user].brush.x = newX;
+        users[user].brush.y = newY;
+
+        mainctx.drawImage(otherCanvas, 0, 0);
+        otherctx.clearRect(0, 0, canvasWidth, canvasHeight);
+      });
+
+    </script>
+  </body>
+</html>

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/css/bootstrap.min.css" integrity="sha384-Zug+QiDoJOrZ5t4lssLdxGhVrurbmBWopoEl+M6BdEfwnCJZtKxi1KgxUyJq13dy" crossorigin="anonymous">
+
+    <!-- CSS -->
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+
+    <title><%= title %></title>
+  </head>
+  <body>
+
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col">
+          <h1 class="text-center h2"><%= title %></h1>
+          <hr>
+        </div>
+      </div>
+    </div>
+
+    <form id="roomform">
+      <div class="container" id="roomFormContainer">
+        <div class="row justify-content-center">
+          <div class="col text-center">
+            <button type="button" class="btn btn-primary btn-block" id="createRoomButton">Create a NEW ROOM</button>
+          </div>
+        </div> 
+        <div class="row justify-content-center">
+          <div class="col">
+            <div class="form-group text-center">
+              <hr>  
+              <label for="roomfield"><b>Need to join a room?</b></label>
+              <input class="form-control text-center" type="text" id="roomfield" placeholder="Enter a ROOM CODE">
+              <button type="button" class="btn btn-primary btn-block" id="joinRoomButton">Join Room</button>
+            </div>
+          </div>
+        </div>
+    <!--     <div class="row">
+          <div class="col-lg-8 text-right">
+            <div class="form-group">
+              <input class="form-control" type="text" id="roomfield" placeholder="Enter a ROOM CODE">
+            </div>
+            <button type="button" class="btn btn-primary" id="roombutton">Submit</button>
+          </div>
+        </div>  -->
+      </div>
+    </form>
+
+<!--     <form id="nameform"> 
+      <div class="container" id="nameFormContainer">
+        <div class="row">
+          <div class="col-lg-8">
+            <h2 class="h4">Your NAME</h2>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-lg-8 text-right">
+            <div class="form-group">
+              <input class="form-control" type="text" id="namefield">
+            </div>
+            <button type="button" class="btn btn-primary" id="namebutton">Submit</button>
+          </div>
+        </div>
+      </div>
+    </form>  -->
+
+    <!-- JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/js/bootstrap.min.js" integrity="sha384-a5N7Y/aK3qNeh15eJKGWxsqtnX/wWdSZSKp+81YjTmS15nvnvxKHuzaWwXHDli+4" crossorigin="anonymous"></script>
+
+    <!-- socket.io -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js" integrity="sha256-WPeFPWD3PZQUDrpFnDM1N2KadNVwCfNS4cCZ78b76T8=" crossorigin="anonymous"></script>
+
+    <!-- Interaction -->
+    <script>
+
+      var socket = io();
+
+    </script>
+  </body>
+</html>

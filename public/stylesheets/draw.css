@@ -1,0 +1,54 @@
+* {
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+body {
+	background-color: white; 
+}
+
+canvas {
+  border: 1px solid black;
+  cursor: crosshair;
+}
+
+#otherCanvas, #myCanvas {
+	display: none;
+}
+
+#widthpick {
+	width: 5em;
+}
+
+.colorpick {
+	width: 47px;
+	height: 47px;
+	display: inline-block;
+  	border: 3px solid #ccc;
+}
+
+.colorpickSelected {
+  	border: 3px solid #555;
+}
+
+.black {
+	background-color: black; 
+}
+
+.white {
+	background-color: white; 
+}
+
+.red {
+	background-color: rgba(255,0,0,1); 
+}
+
+.green {
+	background-color: rgba(0,255,0,1); 
+}
+
+.blue {
+	background-color: rgba(0,0,255,1); 
+}
