@@ -26,28 +26,35 @@
 
       <div class="row justify-content-center">
         <div class="col-auto">
-          <canvas id="mainCanvas" width="400" height="400"></canvas>
-          <canvas id="myCanvas" width="400" height="400"></canvas>
-          <canvas id="otherCanvas" width="400" height="400"></canvas>
+          <canvas id="mainCanvas" width="300" height="300"></canvas>
+          <canvas id="myCanvas" width="300" height="300"></canvas>
+          <canvas id="otherCanvas" width="300" height="300"></canvas>
+        </div>
+      </div>
+
+      <div class="row justify-content-center">
+        <div class="col-auto align-self-center" id="colorpickbox">
+          <!-- Colors are defined below in the swatches object -->
         </div>
       </div>
 
       <div class="row justify-content-center">
         <div class="col-auto align-self-center">
-          <div id="colorpickBlack" class="colorpick colorpickSelected black"></div>
-          <div id="colorpickWhite" class="colorpick white"></div>
-          <div id="colorpickRed" class="colorpick red"></div>
-          <div id="colorpickGreen" class="colorpick green"></div>
-          <div id="colorpickBlue" class="colorpick blue"></div>
-        </div>
-        <div class="col-auto align-self-center">
           <div class="input-group">
             <div class="input-group-prepend">
               <div class="input-group-text">Brush Size</div>
             </div>
-            <input type="number" id="sizepick" class="form-control" value="5" min="1" step="1">
+            <input type="number" id="brushsizepick" class="form-control" value="5" min="1" step="1">
           </div>
         </div>
+<!--         <div class="col-auto align-self-center">
+          <div class="input-group">
+            <div class="input-group-prepend">
+              <div class="input-group-text">Canvas Size</div>
+            </div>
+            <input type="number" id="canvassizepick" class="form-control" value="300" min="100" step="1">
+          </div>
+        </div> -->
       </div>
 
       <div class="row justify-content-center">
@@ -75,7 +82,6 @@
       var canvasHeight = $('#mainCanvas').height();
       var mainctx = canvas.getContext('2d');
 
-
       var myCanvas = document.getElementById('myCanvas');
       var ctx = myCanvas.getContext('2d');
 
@@ -99,6 +105,38 @@
 
 
 
+      var swatches = {
+        black: { r: 0, g: 0, b: 0, a: 1 },
+        white: { r: 255, g: 255, b: 255, a: 1 },
+        red: { r: 206, g: 0, b: 20, a: 1 },
+        orange: { r: 510, g: 85, b: 20, a: 1 },
+        yellow: { r: 231, g: 228, b: 8, a: 1 },
+        green: { r: 49, g: 116, b: 17, a: 1 },
+        blue: { r: 6, g: 42, b: 172, a: 1 },
+        purple: { r: 67, g: 17, b: 116, a: 1 },
+      };
+
+
+
+      for (var color in swatches) {
+        $("#colorpickbox").append('<div id="colorpick-' + color + '" class="colorpick"></div>');
+
+        $("#colorpick-" + color).css( "background-color", "rgba(" + swatches[color].r + "," + swatches[color].g + "," + swatches[color].b + "," + swatches[color].a + ")" );
+
+        $("#colorpick-" + color).click(function() {
+          var color = $(this).attr('id').split('-')[1];
+          myBrush.color.r = swatches[color].r;
+          myBrush.color.g = swatches[color].g;
+          myBrush.color.b = swatches[color].b;
+          $('.colorpick').removeClass( 'colorpickSelected' );
+          $(this).addClass( 'colorpickSelected' );
+        });
+      }
+
+      $("#colorpick-black").addClass("colorpickSelected");
+
+
+
       function brushDown(brush) {
         socket.emit('brushDownOut', brush.x + ',' + brush.y + ',' + brush.color.r + ',' + brush.color.g + ',' + brush.color.b + ',' + brush.color.a + ',' + brush.size);
 
@@ -119,8 +157,8 @@
 
         // Clamp the brush to the canvas bounds and stop drawing if it goes outside
         if ((brush.x < 0) || (brush.y < 0) || (brush.x > canvasWidth) || (brush.y > canvasHeight)) {
-          brush.x = Math.min(canvasWidth, Math.max(0, brush.x));
-          brush.y = Math.min(canvasHeight, Math.max(0, brush.y));
+          brush.x = clamp(brush.x, 0, canvasWidth);
+          brush.y = clamp(brush.y, 0, canvasHeight);
           brushUp(brush);
         }
 
@@ -141,10 +179,13 @@
         brush.down = false;
       }
 
+      function clamp(n, min, max) {
+         return Math.min(Math.max(n, min), max);
+      }
 
 
       $('#mainCanvas').on('mousedown touchstart', function(e){
-        myBrush.size = parseInt($('#sizepick').val(), 10);
+        myBrush.size = parseInt($('#brushsizepick').val(), 10);
         moveBrush(e, myBrush);
         brushDown(myBrush);
         moveBrush(e, myBrush);
@@ -155,7 +196,9 @@
       });
 
       $('#mainCanvas').on('mousemove touchmove', function(e){
-        moveBrush(e, myBrush);
+        if (myBrush.down) {
+          moveBrush(e, myBrush);
+        }
       });
 
       $('#mainCanvas').on('mouseup touchend', function(e){
@@ -172,44 +215,15 @@
 
 
 
-      $('#colorpickBlack').on('click', function(e){
-        myBrush.color.r = 0;
-        myBrush.color.g = 0;
-        myBrush.color.b = 0;
-        $('.colorpick').removeClass( 'colorpickSelected' );
-        $('#colorpickBlack').addClass( 'colorpickSelected' );
-      });
-
-      $('#colorpickWhite').on('click', function(e){
-        myBrush.color.r = 255;
-        myBrush.color.g = 255;
-        myBrush.color.b = 255;
-        $('.colorpick').removeClass( 'colorpickSelected' );
-        $('#colorpickWhite').addClass( 'colorpickSelected' );
-      });
-
-      $('#colorpickRed').on('click', function(e){
-        myBrush.color.r = 255;
-        myBrush.color.g = 0;
-        myBrush.color.b = 0;
-        $('.colorpick').removeClass( 'colorpickSelected' );
-        $('#colorpickRed').addClass( 'colorpickSelected' );
-      });
-
-      $('#colorpickGreen').on('click', function(e){
-        myBrush.color.r = 0;
-        myBrush.color.g = 255;
-        myBrush.color.b = 0;
-        $('.colorpick').removeClass( 'colorpickSelected' );
-        $('#colorpickGreen').addClass( 'colorpickSelected' );
-      });
-
-      $('#colorpickBlue').on('click', function(e){
-        myBrush.color.r = 0;
-        myBrush.color.g = 0;
-        myBrush.color.b = 255;
-        $('.colorpick').removeClass( 'colorpickSelected' );;
-        $('#colorpickBlue').addClass( 'colorpickSelected' );
+      $('#canvassizepick').change(function() {
+        canvasWidth = $('#canvassizepick').val();
+        canvasHeight = $('#canvassizepick').val();
+        mainCanvas.width = canvasWidth;
+        mainCanvas.height = canvasHeight;
+        myCanvas.width = canvasWidth;
+        myCanvas.height = canvasHeight;
+        otherCanvas.width = canvasWidth;
+        otherCanvas.height = canvasHeight;
       });
 
 
