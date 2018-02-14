@@ -7,7 +7,7 @@ var bodyParser = require('body-parser');
 
 var index = require('./routes/index');
 var draw = require('./routes/draw');
-var truth = require('./routes/truth');
+var roomNotFound = require('./routes/roomNotFound');
 
 var app = express();
 
@@ -15,15 +15,15 @@ var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
 
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
-
 // add socket.io to the event loop
 app.use(function(req, res, next){
   res.io = io;
   next();
 });
+
+// view engine setup
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
@@ -34,8 +34,10 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', index);
+app.use('/roomNotFound', roomNotFound);
+
 app.use('/draw', draw);
-app.use('/truth', truth);
+app.use('/draw/:roomId', draw);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -44,7 +46,7 @@ app.use(function(req, res, next) {
   next(err);
 });
 
-// error handler
+// error handling
 app.use(function(err, req, res, next) {
   // set locals, only providing error in development
   res.locals.message = err.message;
