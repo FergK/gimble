@@ -55,10 +55,10 @@ router.get('/', function(req, res, next) {
         delete users[socket.id];
         console.log(room + ' - ' + socket.id + ' - Disconnect');
 
-        if ( Object.keys(users).length === 0 ) {
-          delete rooms[room];
-          console.log('Destroyed room: ' + room);
-        }
+        // if ( Object.keys(users).length === 0 ) {
+        //   delete rooms[room];
+        //   console.log('Destroyed room: ' + room);
+        // }
       });
 
       socket.on('brushDownOut', function(msg){
