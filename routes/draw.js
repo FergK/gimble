@@ -2,9 +2,7 @@ var express = require('express');
 var router = express.Router( {mergeParams: true} );
 
 var rooms = {};
-var users = [];
-
-router.get('/', function(req, res, next) {
+router.get(['/', '/:roomId'], function(req, res, next) {
 
   var room = req.params.roomId;
 
@@ -12,7 +10,7 @@ router.get('/', function(req, res, next) {
 
     var roomIdLength = 6;
     var roomIdChars = 'ABCDEFGHJIKLMNOPQRSTUVWXYZ';
-    var newRoomId = '';
+    var newRoomId;
 
     while ( true ) {
       newRoomId = '';
