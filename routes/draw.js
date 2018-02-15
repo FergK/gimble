@@ -71,7 +71,10 @@ router.get(['/', '/:roomId'], function(req, res, next) {
       
     });
 
-    res.render('draw', { title: 'Draw', room: room });
+    var roomLink = req.protocol + '://' + req.get('host') + req.originalUrl;
+    console.log("roomLink" + roomLink)
+
+    res.render('draw', { title: 'Draw', room: room, roomLink: roomLink });
 
   }
 

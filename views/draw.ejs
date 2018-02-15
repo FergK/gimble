@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous"> 
 
     <!-- CSS -->
     <link rel='stylesheet' href='/stylesheets/draw.css' />
@@ -15,45 +15,49 @@
   </head>
   <body>
 
-    <div class="container">
-
-      <div class="row justify-content-center">
-        <div class="col-auto">
-          <!-- <h1 class="text-center h2"><%= title %></h1> -->
-          <canvas id="mainCanvas" width="300" height="300"></canvas>
-          <canvas id="myCanvas" width="300" height="300"></canvas>
-          <canvas id="otherCanvas" width="300" height="300"></canvas>
-        </div>
+    <div class="g-flex">
+      <div class="g-flex-child g-flex-grow">
+        <canvas id="canvasDisplay" width="800" height="800"></canvas>
       </div>
-
-      <div class="row justify-content-center">
+      <div class="g-flex-child">
         <div id="colorpickbox"></div>
-          <!-- Colors are defined below in the swatches object -->
       </div>
+      <div class="g-flex-child">
 
-      <div class="row justify-content-center">
-        <div class="col-auto align-self-center">
-          <div class="input-group mt-2 mb-2">
+        <div id="toolbox">
+          <div class="input-group mb-2">
             <div class="input-group-prepend">
               <div class="input-group-text">Brush Size</div>
             </div>
-            <input type="number" id="brushsizepick" class="form-control" value="5" min="1" step="1">
+            <input type="number" id="brushsizepick" class="form-control text-right" value="5" min="1" step="1">
           </div>
-        </div>
-      </div>
+          
+          <div class="input-group mb-2">
+            <div class="input-group-prepend">
+              <div class="input-group-text">Room</div>
+            </div>
+            <input type="text" class="form-control text-center" value="<%= room %>" readonly>
+            <div class="input-group-append">
+              <button type="button" id="copyRoomLinkButton" class="btn btn-outline-primary" data-clipboard-text="<%= roomLink %>">Copy Link</button>
+            </div>
+          </div>
 
-      <div class="row justify-content-center">
-        <div class="col-auto align-self-center">
-          <a href="" class="btn btn-outline-secondary">Room Code: <%= room %></a>
         </div>
-      </div>
 
+      </div>
     </div>
+
+    <!-- Hidden canvases used for drawing -->
+    <canvas id="canvasDrawSelf" class="hiddenCanvas" width="800" height="800"></canvas>
+    <canvas id="canvasDrawOther" class="hiddenCanvas" width="800" height="800"></canvas>
 
     <!-- jQuery, Popper.js, Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+    <!-- clipboard.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js"></script>
 
     <!-- socket.io -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js" integrity="sha256-WPeFPWD3PZQUDrpFnDM1N2KadNVwCfNS4cCZ78b76T8=" crossorigin="anonymous"></script>
@@ -61,40 +65,33 @@
     <!-- gimble -->
     <script>
 
-      var socket = io();
+      // =======================================================================
+      // PAGE SETUP
+      // =======================================================================
 
-      var canvas = document.getElementById('mainCanvas');
-      var canvasWidth = $('#mainCanvas').width();
-      var canvasHeight = $('#mainCanvas').height();
-      var mainctx = canvas.getContext('2d');
-      mainctx.fillStyle = "white";
-      mainctx.fillRect(0, 0, canvasWidth, canvasHeight);
+      // Get canvas elements
+      // canvasDisplay is the main canvas that is shown
+      // Brush inputs are drawn onto canvasDrawSelf and copied over to canvasDisplay
+      // Similarly, brush inputs from other users received over websockets are drawn onto canvasDrawOther and copied to canvasDisplay
+      var canvasDisplay = document.getElementById('canvasDisplay');
+      var canvasDrawSelf = document.getElementById('canvasDrawSelf');
+      var canvasDrawOther = document.getElementById('canvasDrawOther');
 
-      var myCanvas = document.getElementById('myCanvas');
-      var ctx = myCanvas.getContext('2d');
+      // Setup canvas contexts
+      var ctxDisplay = canvasDisplay.getContext('2d');
+      var ctxDrawSelf = canvasDrawSelf.getContext('2d');
+      var ctxDrawOther = canvasDrawOther.getContext('2d');
 
-      var otherCanvas = document.getElementById('otherCanvas');
-      var otherctx = otherCanvas.getContext('2d');
+      // Get the bounding rectangle (size and position) of the canvas and fill it with the default background color
+      var canvasSize = canvasDisplay.getBoundingClientRect();
+      ctxDisplay.fillStyle = "white";
+      ctxDisplay.fillRect(0, 0, 800, 800);
 
-      var users = {};
-
-      var myBrush = {
-        x: null,
-        y: null,
-        down: false,
-        color: {
-          r: 0,
-          g: 0,
-          b: 0,
-          a: 1
-        },
-        size: 5
-      };
-
-
-
+      // Declare the colors available for the brush
+      // These particular colors were picked to hit 12 sections of the color wheel,
+      // including RGB, CYM, plus darker variants and greyscale
+      // The names are bad, but they don't really matter as long as they are unique
       var swatches = {
-
         red: { r: 250, g: 41, b: 41, a: 1 },
         amber: { r: 114, g: 43, b: 29, a: 1 },
         orange: { r: 250, g: 111, b: 41, a: 1 },
@@ -120,16 +117,12 @@
         grey: { r: 102, g: 102, b: 102, a: 1 },
         darkgrey: { r: 51, g: 51, b: 51, a: 1 },
         black: { r: 0, g: 0, b: 0, a: 1 }
-
       };
 
-
-
+      // Create a selection button for each of the colors and add it to the page
       for (var color in swatches) {
         $("#colorpickbox").append('<div id="colorpick-' + color + '" class="colorpick"></div>');
-
         $("#colorpick-" + color).css( "background-color", "rgba(" + swatches[color].r + "," + swatches[color].g + "," + swatches[color].b + "," + swatches[color].a + ")" );
-
         $("#colorpick-" + color).click(function() {
           var color = $(this).attr('id').split('-')[1];
           myBrush.color.r = swatches[color].r;
@@ -140,49 +133,143 @@
         });
       }
 
+      // Select black as the default
       $("#colorpick-black").addClass("colorpickSelected");
 
 
 
+      // =======================================================================
+      // SOCKET SETUP
+      // =======================================================================
+
+      // Setup socket.io
+      var socket = io();
+
+      // This object holds info about other users in the room, like IDs and brush settings
+      var users = {};
+
+      // Socket event handlers
+      socket.on('userConnectIn', function(msg){
+        // console.log('User connected: ' + msg);
+      });
+
+      socket.on('userDisconnectIn', function(msg){
+        // console.log('User disconnected: ' + msg);
+        delete users[msg];
+      });
+
+      socket.on('brushDownIn', function(msg){
+        // Another user started drawing, so we've recieved their brush settings
+        var values = msg.split(",");
+        var user = values[0];
+
+        // Parse the brush settings into the user's brush object
+        users[user] = { brush: { color: {}}};
+        users[user].brush.x = values[1];
+        users[user].brush.y = values[2];
+        users[user].brush.down = true;
+        users[user].brush.color.r = values[3];
+        users[user].brush.color.g = values[4];
+        users[user].brush.color.b = values[5];
+        users[user].brush.color.a = values[6];
+        users[user].brush.size = values[7];
+      });
+
+      socket.on('brushMoveIn', function(msg){
+        // Another user is drawing, so we've recieved coordinate of their brush movements
+        var values = msg.split(",");
+        var user = values[0];
+        var newX = values[1];
+        var newY = values[2];
+
+        // Draw the brush movements onto the draw canvas
+        ctxDrawOther.strokeStyle = 'rgba(' + users[user].brush.color.r + ',' + users[user].brush.color.g + ',' + users[user].brush.color.b + ',' + users[user].brush.color.a + ')';
+        ctxDrawOther.lineWidth = users[user].brush.size;
+        ctxDrawOther.lineJoin = "round";
+        ctxDrawOther.lineCap = 'round';
+        ctxDrawOther.beginPath();
+        ctxDrawOther.moveTo(users[user].brush.x, users[user].brush.y);
+        ctxDrawOther.lineTo(newX, newY);
+        ctxDrawOther.stroke();
+
+        // Update the coordinates in preparation for the next stroke
+        users[user].brush.x = newX;
+        users[user].brush.y = newY;
+
+        // Copy the drawing canvas to the display canvas and clear the draw canvas
+        ctxDisplay.drawImage(canvasDrawOther, 0, 0);
+        ctxDrawOther.clearRect(0, 0, canvasSize.width, canvasSize.height);
+      });
+
+
+
+      // =======================================================================
+      // BRUSH SETUP
+      // =======================================================================
+
+      // This object stores the user's brush settings
+      var myBrush = {
+        x: null,
+        y: null,
+        down: false,
+        color: {
+          r: 0,
+          g: 0,
+          b: 0,
+          a: 1
+        },
+        size: 5
+      };
+
       function brushDown(brush) {
+        // Update the current canvas bounding box
+        canvasSize = canvasDisplay.getBoundingClientRect();
+
+        // Send a message over websockets about the current color/size of the brush
         socket.emit('brushDownOut', brush.x + ',' + brush.y + ',' + brush.color.r + ',' + brush.color.g + ',' + brush.color.b + ',' + brush.color.a + ',' + brush.size);
 
-        ctx.strokeStyle = 'rgba(' + brush.color.r + ',' + brush.color.g + ',' + brush.color.b + ',' + brush.color.a + ')';
-        ctx.lineWidth = brush.size;
-        ctx.lineJoin = "round";
-        ctx.lineCap = 'round';
-        ctx.beginPath();
+        // Set the context with the current brush status
+        ctxDrawSelf.strokeStyle = 'rgba(' + brush.color.r + ',' + brush.color.g + ',' + brush.color.b + ',' + brush.color.a + ')';
+        ctxDrawSelf.lineWidth = brush.size;
+        ctxDrawSelf.lineJoin = "round";
+        ctxDrawSelf.lineCap = 'round';
+        ctxDrawSelf.beginPath();
 
+        // The brush is now ready to draw on the canvas
         brush.down = true;
       }
 
       function moveBrush(e, brush) {
-        // Convert the pointer coordinates (relative to the device) to canvas coordinates
-        var offset = $('#mainCanvas').offset();
-        brush.x = Math.floor((e.pageX || e.touches[0].pageX) - offset.left) + 1;
-        brush.y = Math.floor((e.pageY || e.touches[0].pageY) - offset.top) + 1;
+        // Update the current canvas bounding box
+        canvasSize = canvasDisplay.getBoundingClientRect();
+
+        // Convert the pointer coordinates (relative to the device) to canvas coordinates, including scaling
+        brush.x = Math.floor(((e.clientX || e.touches[0].clientX) - canvasSize.left) * (800 / canvasSize.width));
+        brush.y = Math.floor(((e.clientY || e.touches[0].clientY) - canvasSize.top) * (800 / canvasSize.height));
 
         // Clamp the brush to the canvas bounds and stop drawing if it goes outside
-        if ((brush.x < 0) || (brush.y < 0) || (brush.x > canvasWidth) || (brush.y > canvasHeight)) {
-          brush.x = clamp(brush.x, 0, canvasWidth);
-          brush.y = clamp(brush.y, 0, canvasHeight);
-          brushUp(brush);
-        }
+        // This is disabled for the time being to allow for drawing past the edges of the canvas
+        // if ((brush.x < 0) || (brush.y < 0) || (brush.x > 800) || (brush.y > 800)) {
+        //   brush.x = clamp(brush.x, 0, 800);
+        //   brush.y = clamp(brush.y, 0, 800);
+        //   brushUp(brush);
+        // }
 
+        // Draw the brush movements to the canvas and send a websocket message with the coordinates
         if (brush.down) {
           socket.emit('brushMoveOut', brush.x + ',' + brush.y);
-          ctx.lineTo(brush.x, brush.y);
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.moveTo(brush.x, brush.y);
+          ctxDrawSelf.lineTo(brush.x, brush.y);
+          ctxDrawSelf.stroke();
+          ctxDrawSelf.beginPath();
+          ctxDrawSelf.moveTo(brush.x, brush.y);
 
-          mainctx.drawImage(myCanvas, 0, 0);
-          ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+          // Copy the drawing canvas to the display canvas and clear the draw canvas
+          ctxDisplay.drawImage(canvasDrawSelf, 0, 0);
+          ctxDrawSelf.clearRect(0, 0, canvasSize.width, canvasSize.height);
         }
       };
 
       function brushUp(brush) {
-        // socket.emit('brushUpOut');
         brush.down = false;
       }
 
@@ -191,7 +278,8 @@
       }
 
 
-      $('#mainCanvas').on('mousedown touchstart', function(e){
+      // Brush event handlers
+      $('#canvasDisplay').on('mousedown touchstart', function(e){
         myBrush.size = parseInt($('#brushsizepick').val(), 10);
         moveBrush(e, myBrush);
         brushDown(myBrush);
@@ -202,100 +290,24 @@
         e.stopPropagation();
       });
 
-      $('#mainCanvas').on('mousemove touchmove', function(e){
+      $('body').on('mousemove touchmove', function(e){
         if (myBrush.down) {
           moveBrush(e, myBrush);
         }
       });
 
-      $('#mainCanvas').on('mouseup touchend', function(e){
-        if (myBrush.down) {
-          brushUp(myBrush);
-        }
-      });
-
-      $('#mainCanvas').on('mouseleave', function(e){
-        if (myBrush.down) {
-          brushUp(myBrush);
-        }
+      $('body').on('mouseup touchend mouseleave', function(e){
+        brushUp(myBrush);
       });
 
 
 
-      $('#canvassizepick').change(function() {
-        canvasWidth = $('#canvassizepick').val();
-        canvasHeight = $('#canvassizepick').val();
-        mainCanvas.width = canvasWidth;
-        mainCanvas.height = canvasHeight;
-        myCanvas.width = canvasWidth;
-        myCanvas.height = canvasHeight;
-        otherCanvas.width = canvasWidth;
-        otherCanvas.height = canvasHeight;
-      });
+      // =======================================================================
+      // TOOLS SETUP
+      // =======================================================================
 
-
-
-      socket.on('userConnectIn', function(msg){
-        console.log('User connected: ' + msg);
-      });
-
-      socket.on('userDisconnectIn', function(msg){
-        console.log('User disconnected: ' + msg);
-        delete users[msg];
-      });
-
-      socket.on('brushDownIn', function(msg){
-        var values = msg.split(",");
-        var user = values[0];
-
-        // If this user hasn't been seen before, add them to the list with a default brush
-        users[user] = {
-          brush: {
-            x: null,
-            y: null,
-            down: false,
-            color: {
-              r: 0,
-              g: 0,
-              b: 0,
-              a: 1
-            },
-            size: 5
-          }
-        };
-
-        users[user].brush.x = values[1];
-        users[user].brush.y = values[2];
-        users[user].brush.down = true;
-        users[user].brush.color.r = values[3];
-        users[user].brush.color.g = values[4];
-        users[user].brush.color.b = values[5];
-        users[user].brush.color.a = values[6];
-        users[user].brush.size = values[7];
-
-      });
-
-      socket.on('brushMoveIn', function(msg){
-        var values = msg.split(",");
-        var user = values[0];
-        var newX = values[1];
-        var newY = values[2];
-
-        otherctx.strokeStyle = 'rgba(' + users[user].brush.color.r + ',' + users[user].brush.color.g + ',' + users[user].brush.color.b + ',' + users[user].brush.color.a + ')';
-        otherctx.lineWidth = users[user].brush.size;
-        otherctx.lineJoin = "round";
-        otherctx.lineCap = 'round';
-        otherctx.beginPath();
-        otherctx.moveTo(users[user].brush.x, users[user].brush.y);
-        otherctx.lineTo(newX, newY);
-        otherctx.stroke();
-
-        users[user].brush.x = newX;
-        users[user].brush.y = newY;
-
-        mainctx.drawImage(otherCanvas, 0, 0);
-        otherctx.clearRect(0, 0, canvasWidth, canvasHeight);
-      });
+      // Setup clipboard.js for copying room link
+      new Clipboard('#copyRoomLinkButton');      
 
     </script>
   </body>
