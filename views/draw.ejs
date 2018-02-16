@@ -25,11 +25,19 @@
       <div class="g-flex-child">
 
         <div id="toolbox">
-          <div class="input-group mb-2">
+          <div class="input-group">
             <div class="input-group-prepend">
               <div class="input-group-text">Brush Size</div>
             </div>
-            <input type="number" id="brushsizepick" class="form-control text-right" value="5" min="1" step="1">
+            <input type="number" id="brushSizeInput" class="form-control text-right" value="5" min="1" step="1">
+          </div>
+          <div class="btn-group btn-group-sm mb-2" role="toolbar">
+            <button type="button" class="btn btn-light brushSizeButton" data-brush-size="1">1</button>
+            <button type="button" class="btn btn-light brushSizeButton" data-brush-size="5">5</button>
+            <button type="button" class="btn btn-light brushSizeButton" data-brush-size="10">10</button>
+            <button type="button" class="btn btn-light brushSizeButton" data-brush-size="50">50</button>
+            <button type="button" class="btn btn-light brushSizeButton" data-brush-size="100">100</button>
+            <button type="button" class="btn btn-light brushSizeButton" data-brush-size="500">500</button>
           </div>
           
           <div class="input-group mb-2">
@@ -38,7 +46,7 @@
             </div>
             <input type="text" class="form-control text-center" value="<%= room %>" readonly>
             <div class="input-group-append">
-              <button type="button" id="copyRoomLinkButton" class="btn btn-outline-primary" data-clipboard-text="<%= roomLink %>">Copy Link</button>
+              <button type="button" id="copyRoomLinkButton" class="btn btn-light" data-clipboard-text="<%= roomLink %>">Copy Link</button>
             </div>
           </div>
 
@@ -176,7 +184,7 @@
       });
 
       socket.on('brushMoveIn', function(msg){
-        // Another user is drawing, so we've recieved coordinate of their brush movements
+        // Another user is drawing, so we've recieved a coordinate of their brush movements
         var values = msg.split(",");
         var user = values[0];
         var newX = values[1];
@@ -280,7 +288,7 @@
 
       // Brush event handlers
       $('#canvasDisplay').on('mousedown touchstart', function(e){
-        myBrush.size = parseInt($('#brushsizepick').val(), 10);
+        myBrush.size = parseInt($('#brushSizeInput').val(), 10);
         moveBrush(e, myBrush);
         brushDown(myBrush);
         moveBrush(e, myBrush);
@@ -307,7 +315,12 @@
       // =======================================================================
 
       // Setup clipboard.js for copying room link
-      new Clipboard('#copyRoomLinkButton');      
+      new Clipboard('#copyRoomLinkButton');
+
+      // Setup brush size buttons
+      $('.brushSizeButton').on('click', function(e){
+        $('#brushSizeInput').val( $(this).data( "brush-size" ) );
+      });
 
     </script>
   </body>
