@@ -16,8 +16,8 @@
   <body>
 
     <div class="g-flex">
-      <div class="g-flex-child g-flex-grow">
-        <canvas id="canvasDisplay" width="800" height="800"></canvas>
+      <div id="canvasContainer" class="g-flex-child g-flex-grow">
+        <canvas id="canvasDisplay" width="700" height="700"></canvas>
       </div>
       <div class="g-flex-child">
         <div id="colorpickbox"></div>
@@ -49,17 +49,27 @@
               <button type="button" id="copyRoomLinkButton" class="btn btn-light" data-clipboard-text="<%= roomLink %>">Copy Link</button>
             </div>
           </div>
-
         </div>
 
+ <!--      </div>
+      <div class="g-flex-child"> -->
+        <ul id="user-list" class="list-group">
+          <li class="list-group-item p-1 list-group-item-secondary">User List</li>
+          <li class="list-group-item p-1">User 1</li>
+          <li class="list-group-item p-1">User 2</li>
+          <li class="list-group-item p-1">User 3</li>
+          <li class="list-group-item p-1">User 4</li>
+          <li class="list-group-item p-1">User 5</li>
+        </ul>
       </div>
+
     </div>
 
     <!-- Hidden canvases used for drawing -->
-    <canvas id="canvasDrawSelf" class="hiddenCanvas" width="800" height="800"></canvas>
-    <canvas id="canvasDrawOther" class="hiddenCanvas" width="800" height="800"></canvas>
+    <canvas id="canvasDrawSelf" class="hiddenCanvas" width="700" height="700" hidden></canvas>
+    <canvas id="canvasDrawOther" class="hiddenCanvas" width="700" height="700" hidden></canvas>
 
-    <!-- jQuery, Popper.js, Bootstrap JS -->
+    <!-- jQuery, Popper.js, Bootstrap js -->
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
@@ -69,6 +79,10 @@
 
     <!-- socket.io -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js" integrity="sha256-WPeFPWD3PZQUDrpFnDM1N2KadNVwCfNS4cCZ78b76T8=" crossorigin="anonymous"></script>
+
+    <!-- WebRTC adapter.js -->
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/webrtc-adapter/6.1.1/adapter.js" integrity="sha256-AcQKptxrGbcfXE/NBXQHBKWJodrSQFKLGLfq1CH8q0I=" crossorigin="anonymous"></script> -->
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/webrtc-adapter/6.1.1/adapter.min.js" integrity="sha256-+R/ZHWfUu08yZPxl4MFB5eBNV3Jp3bRGtYq7YEVWrwc=" crossorigin="anonymous"></script> -->
 
     <!-- gimble -->
     <script>
@@ -93,7 +107,7 @@
       // Get the bounding rectangle (size and position) of the canvas and fill it with the default background color
       var canvasSize = canvasDisplay.getBoundingClientRect();
       ctxDisplay.fillStyle = "white";
-      ctxDisplay.fillRect(0, 0, 800, 800);
+      ctxDisplay.fillRect(0, 0, 700, 700);
 
       // Declare the colors available for the brush
       // These particular colors were picked to hit 12 sections of the color wheel,
@@ -252,14 +266,14 @@
         canvasSize = canvasDisplay.getBoundingClientRect();
 
         // Convert the pointer coordinates (relative to the device) to canvas coordinates, including scaling
-        brush.x = Math.floor(((e.clientX || e.touches[0].clientX) - canvasSize.left) * (800 / canvasSize.width));
-        brush.y = Math.floor(((e.clientY || e.touches[0].clientY) - canvasSize.top) * (800 / canvasSize.height));
+        brush.x = Math.floor(((e.clientX || e.touches[0].clientX) - canvasSize.left) * (700 / canvasSize.width));
+        brush.y = Math.floor(((e.clientY || e.touches[0].clientY) - canvasSize.top) * (700 / canvasSize.height));
 
         // Clamp the brush to the canvas bounds and stop drawing if it goes outside
         // This is disabled for the time being to allow for drawing past the edges of the canvas
-        // if ((brush.x < 0) || (brush.y < 0) || (brush.x > 800) || (brush.y > 800)) {
-        //   brush.x = clamp(brush.x, 0, 800);
-        //   brush.y = clamp(brush.y, 0, 800);
+        // if ((brush.x < 0) || (brush.y < 0) || (brush.x > 700) || (brush.y > 700)) {
+        //   brush.x = clamp(brush.x, 0, 700);
+        //   brush.y = clamp(brush.y, 0, 700);
         //   brushUp(brush);
         // }
 

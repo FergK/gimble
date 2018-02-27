@@ -44,15 +44,22 @@ router.get(['/', '/:roomId'], function(req, res, next) {
       users[socket.id] = { name: 'Cool Person' };
       socket.join(room);
       
-      socket.broadcast.to(room).emit('userConnectIn', socket.id);
+      // socket.broadcast.to(room).emit('userConnectIn', socket.id);
+      socket.to(room).emit('userConnectIn', socket.id);
 
       console.log(room + ' - ' + socket.id + ' - Connect');
 
       socket.on('disconnect', function(){
-        socket.broadcast.to(room).emit('userDisconnectIn', socket.id);
+        // socket.broadcast.to(room).emit('userDisconnectIn', socket.id);
+        socket.to(room).emit('userDisconnectIn', socket.id);
         delete users[socket.id];
         console.log(room + ' - ' + socket.id + ' - Disconnect');
 
+        // Delete the room if there are no users currently using it
+        // This is disabled for the moment because certain browser implementations
+        // of websockets disconnect after a period of inactivity, even if the
+        // page is still active. This results in the room getting deleted even
+        // if someone is still using it.
         // if ( Object.keys(users).length === 0 ) {
         //   delete rooms[room];
         //   console.log('Destroyed room: ' + room);
@@ -60,12 +67,14 @@ router.get(['/', '/:roomId'], function(req, res, next) {
       });
 
       socket.on('brushDownOut', function(msg){
-        socket.broadcast.to(room).emit('brushDownIn', socket.id + ',' + msg);
+        // socket.broadcast.to(room).emit('brushDownIn', socket.id + ',' + msg);
+        socket.to(room).emit('brushDownIn', socket.id + ',' + msg);
         console.log(room + ' - ' + socket.id + ' - brushDownOut - ' + msg);
       });
 
       socket.on('brushMoveOut', function(msg){
-        socket.broadcast.to(room).emit('brushMoveIn', socket.id + ',' + msg);
+        // socket.broadcast.to(room).emit('brushMoveIn', socket.id + ',' + msg);
+        socket.to(room).emit('brushMoveIn', socket.id + ',' + msg);
         console.log(room + ' - ' + socket.id + ' - brushMoveOut - ' + msg);
       });
       
