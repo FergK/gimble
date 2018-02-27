@@ -51,16 +51,14 @@
           </div>
         </div>
 
- <!--      </div>
-      <div class="g-flex-child"> -->
-        <ul id="user-list" class="list-group">
+        <ul id="user-list" class="list-group small">
           <li class="list-group-item p-1 list-group-item-secondary">User List</li>
-          <li class="list-group-item p-1">User 1</li>
-          <li class="list-group-item p-1">User 2</li>
-          <li class="list-group-item p-1">User 3</li>
-          <li class="list-group-item p-1">User 4</li>
-          <li class="list-group-item p-1">User 5</li>
+          <!-- <li class="list-group-item p-1">User 1</li> -->
         </ul>
+
+        <div id="connectionIndicator" class="small">Disconnected</div>
+
+        <div id="pingIndicator"></div>
       </div>
 
     </div>
@@ -79,10 +77,6 @@
 
     <!-- socket.io -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js" integrity="sha256-WPeFPWD3PZQUDrpFnDM1N2KadNVwCfNS4cCZ78b76T8=" crossorigin="anonymous"></script>
-
-    <!-- WebRTC adapter.js -->
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/webrtc-adapter/6.1.1/adapter.js" integrity="sha256-AcQKptxrGbcfXE/NBXQHBKWJodrSQFKLGLfq1CH8q0I=" crossorigin="anonymous"></script> -->
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/webrtc-adapter/6.1.1/adapter.min.js" integrity="sha256-+R/ZHWfUu08yZPxl4MFB5eBNV3Jp3bRGtYq7YEVWrwc=" crossorigin="anonymous"></script> -->
 
     <!-- gimble -->
     <script>
@@ -166,21 +160,41 @@
 
       // Setup socket.io
       var socket = io();
+      var myId = null;
+      var myName = "Cool Person";
 
-      // This object holds info about other users in the room, like IDs and brush settings
+      // This object holds info about users in the room, like IDs and brush settings
       var users = {};
 
       // Socket event handlers
-      socket.on('userConnectIn', function(msg){
-        // console.log('User connected: ' + msg);
+      socket.on('connect', () => {
+        $('#connectionIndicator').html('Connected');
+        console.log('Connected, Socket ID: ' + socket.id);
+        myId = socket.id;
+        users[myId] = { name: myName };
+      });
+      socket.on('disconnect', () => {
+        $('#connectionIndicator').html('Disconnected');
+        console.log('Disconnected');
+      });
+      socket.on('reconnecting', (attemptNumber) => {
+        $('#connectionIndicator').html('Reconnecting');
+        console.log('Reconnecting: Attempt ' + attemptNumber);
+      });
+      socket.on('pong', (latency) => {
+        console.log('Latency: ' + latency + 'ms');
       });
 
-      socket.on('userDisconnectIn', function(msg){
-        // console.log('User disconnected: ' + msg);
+      socket.on('userConnectIn', (msg) => {
+        console.log('User connected: ' + msg);
+      });
+
+      socket.on('userDisconnectIn', (msg) => {
+        console.log('User disconnected: ' + msg);
         delete users[msg];
       });
 
-      socket.on('brushDownIn', function(msg){
+      socket.on('brushDownIn', (msg) => {
         // Another user started drawing, so we've recieved their brush settings
         var values = msg.split(",");
         var user = values[0];
@@ -197,7 +211,7 @@
         users[user].brush.size = values[7];
       });
 
-      socket.on('brushMoveIn', function(msg){
+      socket.on('brushMoveIn', (msg) => {
         // Another user is drawing, so we've recieved a coordinate of their brush movements
         var values = msg.split(",");
         var user = values[0];

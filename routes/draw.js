@@ -44,13 +44,12 @@ router.get(['/', '/:roomId'], function(req, res, next) {
       users[socket.id] = { name: 'Cool Person' };
       socket.join(room);
       
-      // socket.broadcast.to(room).emit('userConnectIn', socket.id);
+      // Send a message announcing a user has connected to the room, with their socket ID
       socket.to(room).emit('userConnectIn', socket.id);
 
       console.log(room + ' - ' + socket.id + ' - Connect');
 
       socket.on('disconnect', function(){
-        // socket.broadcast.to(room).emit('userDisconnectIn', socket.id);
         socket.to(room).emit('userDisconnectIn', socket.id);
         delete users[socket.id];
         console.log(room + ' - ' + socket.id + ' - Disconnect');
@@ -90,3 +89,6 @@ router.get(['/', '/:roomId'], function(req, res, next) {
 });
 
 module.exports = router;
+
+// https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API/Signaling_and_video_calling
+// https://github.com/mdn/samples-server/tree/master/s
